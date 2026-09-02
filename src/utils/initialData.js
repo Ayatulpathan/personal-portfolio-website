@@ -6,7 +6,7 @@ export const initialProfile = {
   email: "ayatulpathan@example.com",
   phone: "+880 1700-000000",
   location: "Dhaka / Jashore, Bangladesh",
-  profileImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
+  profileImage: "/profile.jpg",
   resumeUrl: "#",
   yearsExperience: "3+",
   projectsCompleted: "20+",

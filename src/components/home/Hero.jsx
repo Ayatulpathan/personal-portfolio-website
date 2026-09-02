@@ -20,7 +20,7 @@ export default function Hero() {
   const name = profile?.name || "Ayatul Pathan";
   const title = profile?.title || "Software Developer | Researcher | Technology Enthusiast";
   const bio = profile?.bio || "Building modern, scalable web applications with React.js and Firebase, while researching intelligent distributed architectures.";
-  const avatarUrl = profile?.profileImage || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80";
+  const avatarUrl = profile?.profileImage || "/profile.jpg";
 
   return (
     <section className="relative overflow-hidden pt-6 sm:pt-12 pb-16 lg:pb-24">

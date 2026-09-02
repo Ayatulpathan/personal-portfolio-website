@@ -116,7 +116,7 @@ export default function ProfileManager() {
             
             <div className="w-32 h-32 mx-auto rounded-2xl overflow-hidden border-2 border-indigo-500/30 bg-gray-900">
               <img
-                src={formData.profileImage || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80"}
+                src={formData.profileImage || "/profile.jpg"}
                 alt="Profile Preview"
                 className="w-full h-full object-cover"
               />

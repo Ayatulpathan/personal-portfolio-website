@@ -63,7 +63,7 @@ export default function About() {
           <div className="glass-panel p-6 rounded-3xl space-y-6 text-center">
             <div className="w-40 h-40 mx-auto rounded-2xl overflow-hidden shadow-lg border-2 border-indigo-500/20">
               <img
-                src={profile?.profileImage || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80"}
+                src={profile?.profileImage || "/profile.jpg"}
                 alt={profile?.name}
                 className="w-full h-full object-cover"
               />
