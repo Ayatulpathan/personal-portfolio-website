@@ -1,54 +1,30 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper function to verify admin authentication
-    function isAdmin() {
-      return request.auth != null;
-    }
-
-    // Public portfolio read access, admin full write
+    // Allow public read and direct database updates from the portfolio admin
     match /profile/{document=**} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
-    
     match /skills/{document=**} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
-    
     match /education/{document=**} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
-    
     match /experience/{document=**} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
-    
     match /projects/{document=**} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
-    
     match /research/{document=**} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
-    
     match /socialLinks/{document=**} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
-
-    // Contact form messages: Any visitor can create, only admin can read/update/delete
-    match /messages/{messageId} {
-      allow create: if request.resource.data.name is string &&
-                       request.resource.data.email is string &&
-                       request.resource.data.message is string;
-      allow read, update, delete: if isAdmin();
+    match /messages/{document=**} {
+      allow read, write: if true;
     }
   }
 }

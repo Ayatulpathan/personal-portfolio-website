@@ -62,7 +62,15 @@ export const portfolioService = {
         const docRef = doc(db, "profile", "main");
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          return docSnap.data();
+          const liveData = docSnap.data();
+          const state = getLocalState();
+          state.profile = liveData;
+          saveLocalState(state);
+          return liveData;
+        } else {
+          // Auto-seed profile into Firestore
+          await setDoc(docRef, initialProfile);
+          return initialProfile;
         }
       } catch (err) {
         console.warn("Firestore error fetching profile, using fallback:", err);
@@ -73,8 +81,14 @@ export const portfolioService = {
 
   async updateProfile(profileData) {
     if (isFirebaseConfigured && db) {
-      const docRef = doc(db, "profile", "main");
-      await setDoc(docRef, { ...profileData, updatedAt: serverTimestamp() }, { merge: true });
+      try {
+        const docRef = doc(db, "profile", "main");
+        await setDoc(docRef, { ...profileData, updatedAt: serverTimestamp() }, { merge: true });
+        console.log("✅ Profile updated in Cloud Firestore!");
+      } catch (err) {
+        console.error("Failed to update profile in Cloud Firestore:", err);
+        throw err;
+      }
     }
     const state = getLocalState();
     state.profile = { ...state.profile, ...profileData };
@@ -91,7 +105,18 @@ export const portfolioService = {
         const q = query(collection(db, "skills"), orderBy("order", "asc"));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
-          return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const liveSkills = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          const state = getLocalState();
+          state.skills = liveSkills;
+          saveLocalState(state);
+          return liveSkills;
+        } else {
+          // Auto-seed skills into Firestore
+          for (const s of initialSkills) {
+            const { id, ...data } = s;
+            await setDoc(doc(db, "skills", id), data);
+          }
+          return initialSkills;
         }
       } catch (err) {
         console.warn("Firestore error fetching skills:", err);
@@ -103,11 +128,17 @@ export const portfolioService = {
   async addSkill(skillData) {
     let newSkill = { ...skillData };
     if (isFirebaseConfigured && db) {
-      const docRef = await addDoc(collection(db, "skills"), {
-        ...skillData,
-        createdAt: serverTimestamp()
-      });
-      newSkill.id = docRef.id;
+      try {
+        const docRef = await addDoc(collection(db, "skills"), {
+          ...skillData,
+          createdAt: serverTimestamp()
+        });
+        newSkill.id = docRef.id;
+        console.log("✅ Skill added to Cloud Firestore:", docRef.id);
+      } catch (err) {
+        console.error("Failed to add skill in Cloud Firestore:", err);
+        throw err;
+      }
     } else {
       newSkill.id = "sk-" + Date.now();
     }
@@ -119,7 +150,14 @@ export const portfolioService = {
 
   async updateSkill(id, skillData) {
     if (isFirebaseConfigured && db) {
-      await updateDoc(doc(db, "skills", id), skillData);
+      try {
+        const docRef = doc(db, "skills", id);
+        await setDoc(docRef, { ...skillData, updatedAt: serverTimestamp() }, { merge: true });
+        console.log("✅ Skill updated in Cloud Firestore:", id);
+      } catch (err) {
+        console.error("Failed to update skill in Cloud Firestore:", err);
+        throw err;
+      }
     }
     const state = getLocalState();
     state.skills = state.skills.map(s => s.id === id ? { ...s, ...skillData } : s);
@@ -129,7 +167,13 @@ export const portfolioService = {
 
   async deleteSkill(id) {
     if (isFirebaseConfigured && db) {
-      await deleteDoc(doc(db, "skills", id));
+      try {
+        await deleteDoc(doc(db, "skills", id));
+        console.log("✅ Skill deleted from Cloud Firestore:", id);
+      } catch (err) {
+        console.error("Failed to delete skill in Cloud Firestore:", err);
+        throw err;
+      }
     }
     const state = getLocalState();
     state.skills = state.skills.filter(s => s.id !== id);
@@ -146,7 +190,18 @@ export const portfolioService = {
         const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
-          return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const liveProjects = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          const state = getLocalState();
+          state.projects = liveProjects;
+          saveLocalState(state);
+          return liveProjects;
+        } else {
+          // Auto-seed projects into Firestore
+          for (const p of initialProjects) {
+            const { id, ...data } = p;
+            await setDoc(doc(db, "projects", id), data);
+          }
+          return initialProjects;
         }
       } catch (err) {
         console.warn("Firestore error fetching projects:", err);
@@ -158,11 +213,17 @@ export const portfolioService = {
   async addProject(projectData) {
     let newProj = { ...projectData, createdAt: new Date().toISOString() };
     if (isFirebaseConfigured && db) {
-      const docRef = await addDoc(collection(db, "projects"), {
-        ...projectData,
-        createdAt: serverTimestamp()
-      });
-      newProj.id = docRef.id;
+      try {
+        const docRef = await addDoc(collection(db, "projects"), {
+          ...projectData,
+          createdAt: serverTimestamp()
+        });
+        newProj.id = docRef.id;
+        console.log("✅ Project added to Cloud Firestore:", docRef.id);
+      } catch (err) {
+        console.error("Failed to add project in Cloud Firestore:", err);
+        throw err;
+      }
     } else {
       newProj.id = "proj-" + Date.now();
     }
@@ -174,7 +235,14 @@ export const portfolioService = {
 
   async updateProject(id, projectData) {
     if (isFirebaseConfigured && db) {
-      await updateDoc(doc(db, "projects", id), projectData);
+      try {
+        const docRef = doc(db, "projects", id);
+        await setDoc(docRef, { ...projectData, updatedAt: serverTimestamp() }, { merge: true });
+        console.log("✅ Project updated in Cloud Firestore:", id);
+      } catch (err) {
+        console.error("Failed to update project in Cloud Firestore:", err);
+        throw err;
+      }
     }
     const state = getLocalState();
     state.projects = state.projects.map(p => p.id === id ? { ...p, ...projectData } : p);
@@ -184,7 +252,13 @@ export const portfolioService = {
 
   async deleteProject(id) {
     if (isFirebaseConfigured && db) {
-      await deleteDoc(doc(db, "projects", id));
+      try {
+        await deleteDoc(doc(db, "projects", id));
+        console.log("✅ Project deleted from Cloud Firestore:", id);
+      } catch (err) {
+        console.error("Failed to delete project in Cloud Firestore:", err);
+        throw err;
+      }
     }
     const state = getLocalState();
     state.projects = state.projects.filter(p => p.id !== id);
@@ -201,7 +275,17 @@ export const portfolioService = {
         const q = query(collection(db, "experience"), orderBy("startDate", "desc"));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
-          return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const liveExp = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          const state = getLocalState();
+          state.experience = liveExp;
+          saveLocalState(state);
+          return liveExp;
+        } else {
+          for (const e of initialExperience) {
+            const { id, ...data } = e;
+            await setDoc(doc(db, "experience", id), data);
+          }
+          return initialExperience;
         }
       } catch (err) {
         console.warn("Firestore error fetching experience:", err);
@@ -213,11 +297,17 @@ export const portfolioService = {
   async addExperience(expData) {
     let newExp = { ...expData };
     if (isFirebaseConfigured && db) {
-      const docRef = await addDoc(collection(db, "experience"), {
-        ...expData,
-        createdAt: serverTimestamp()
-      });
-      newExp.id = docRef.id;
+      try {
+        const docRef = await addDoc(collection(db, "experience"), {
+          ...expData,
+          createdAt: serverTimestamp()
+        });
+        newExp.id = docRef.id;
+        console.log("✅ Experience added to Cloud Firestore:", docRef.id);
+      } catch (err) {
+        console.error("Failed to add experience in Cloud Firestore:", err);
+        throw err;
+      }
     } else {
       newExp.id = "exp-" + Date.now();
     }
@@ -229,7 +319,14 @@ export const portfolioService = {
 
   async updateExperience(id, expData) {
     if (isFirebaseConfigured && db) {
-      await updateDoc(doc(db, "experience", id), expData);
+      try {
+        const docRef = doc(db, "experience", id);
+        await setDoc(docRef, { ...expData, updatedAt: serverTimestamp() }, { merge: true });
+        console.log("✅ Experience updated in Cloud Firestore:", id);
+      } catch (err) {
+        console.error("Failed to update experience in Cloud Firestore:", err);
+        throw err;
+      }
     }
     const state = getLocalState();
     state.experience = state.experience.map(e => e.id === id ? { ...e, ...expData } : e);
@@ -239,7 +336,13 @@ export const portfolioService = {
 
   async deleteExperience(id) {
     if (isFirebaseConfigured && db) {
-      await deleteDoc(doc(db, "experience", id));
+      try {
+        await deleteDoc(doc(db, "experience", id));
+        console.log("✅ Experience deleted from Cloud Firestore:", id);
+      } catch (err) {
+        console.error("Failed to delete experience in Cloud Firestore:", err);
+        throw err;
+      }
     }
     const state = getLocalState();
     state.experience = state.experience.filter(e => e.id !== id);
@@ -256,7 +359,17 @@ export const portfolioService = {
         const q = query(collection(db, "education"), orderBy("startYear", "desc"));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
-          return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const liveEdu = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          const state = getLocalState();
+          state.education = liveEdu;
+          saveLocalState(state);
+          return liveEdu;
+        } else {
+          for (const ed of initialEducation) {
+            const { id, ...data } = ed;
+            await setDoc(doc(db, "education", id), data);
+          }
+          return initialEducation;
         }
       } catch (err) {
         console.warn("Firestore error fetching education:", err);
@@ -268,11 +381,17 @@ export const portfolioService = {
   async addEducation(eduData) {
     let newEdu = { ...eduData };
     if (isFirebaseConfigured && db) {
-      const docRef = await addDoc(collection(db, "education"), {
-        ...eduData,
-        createdAt: serverTimestamp()
-      });
-      newEdu.id = docRef.id;
+      try {
+        const docRef = await addDoc(collection(db, "education"), {
+          ...eduData,
+          createdAt: serverTimestamp()
+        });
+        newEdu.id = docRef.id;
+        console.log("✅ Education added to Cloud Firestore:", docRef.id);
+      } catch (err) {
+        console.error("Failed to add education in Cloud Firestore:", err);
+        throw err;
+      }
     } else {
       newEdu.id = "edu-" + Date.now();
     }
@@ -284,7 +403,14 @@ export const portfolioService = {
 
   async updateEducation(id, eduData) {
     if (isFirebaseConfigured && db) {
-      await updateDoc(doc(db, "education", id), eduData);
+      try {
+        const docRef = doc(db, "education", id);
+        await setDoc(docRef, { ...eduData, updatedAt: serverTimestamp() }, { merge: true });
+        console.log("✅ Education updated in Cloud Firestore:", id);
+      } catch (err) {
+        console.error("Failed to update education in Cloud Firestore:", err);
+        throw err;
+      }
     }
     const state = getLocalState();
     state.education = state.education.map(ed => ed.id === id ? { ...ed, ...eduData } : ed);
@@ -294,7 +420,13 @@ export const portfolioService = {
 
   async deleteEducation(id) {
     if (isFirebaseConfigured && db) {
-      await deleteDoc(doc(db, "education", id));
+      try {
+        await deleteDoc(doc(db, "education", id));
+        console.log("✅ Education deleted from Cloud Firestore:", id);
+      } catch (err) {
+        console.error("Failed to delete education in Cloud Firestore:", err);
+        throw err;
+      }
     }
     const state = getLocalState();
     state.education = state.education.filter(ed => ed.id !== id);
@@ -311,7 +443,17 @@ export const portfolioService = {
         const q = query(collection(db, "research"), orderBy("year", "desc"));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
-          return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const liveRes = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          const state = getLocalState();
+          state.research = liveRes;
+          saveLocalState(state);
+          return liveRes;
+        } else {
+          for (const r of initialResearch) {
+            const { id, ...data } = r;
+            await setDoc(doc(db, "research", id), data);
+          }
+          return initialResearch;
         }
       } catch (err) {
         console.warn("Firestore error fetching research:", err);
@@ -323,11 +465,17 @@ export const portfolioService = {
   async addResearch(researchData) {
     let newRes = { ...researchData };
     if (isFirebaseConfigured && db) {
-      const docRef = await addDoc(collection(db, "research"), {
-        ...researchData,
-        createdAt: serverTimestamp()
-      });
-      newRes.id = docRef.id;
+      try {
+        const docRef = await addDoc(collection(db, "research"), {
+          ...researchData,
+          createdAt: serverTimestamp()
+        });
+        newRes.id = docRef.id;
+        console.log("✅ Research added to Cloud Firestore:", docRef.id);
+      } catch (err) {
+        console.error("Failed to add research in Cloud Firestore:", err);
+        throw err;
+      }
     } else {
       newRes.id = "res-" + Date.now();
     }
@@ -339,7 +487,14 @@ export const portfolioService = {
 
   async updateResearch(id, researchData) {
     if (isFirebaseConfigured && db) {
-      await updateDoc(doc(db, "research", id), researchData);
+      try {
+        const docRef = doc(db, "research", id);
+        await setDoc(docRef, { ...researchData, updatedAt: serverTimestamp() }, { merge: true });
+        console.log("✅ Research updated in Cloud Firestore:", id);
+      } catch (err) {
+        console.error("Failed to update research in Cloud Firestore:", err);
+        throw err;
+      }
     }
     const state = getLocalState();
     state.research = state.research.map(r => r.id === id ? { ...r, ...researchData } : r);
@@ -349,7 +504,13 @@ export const portfolioService = {
 
   async deleteResearch(id) {
     if (isFirebaseConfigured && db) {
-      await deleteDoc(doc(db, "research", id));
+      try {
+        await deleteDoc(doc(db, "research", id));
+        console.log("✅ Research deleted from Cloud Firestore:", id);
+      } catch (err) {
+        console.error("Failed to delete research in Cloud Firestore:", err);
+        throw err;
+      }
     }
     const state = getLocalState();
     state.research = state.research.filter(r => r.id !== id);
@@ -366,7 +527,13 @@ export const portfolioService = {
         const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
-          return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const liveMsg = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          const state = getLocalState();
+          state.messages = liveMsg;
+          saveLocalState(state);
+          return liveMsg;
+        } else {
+          return initialMessages;
         }
       } catch (err) {
         console.warn("Firestore error fetching messages:", err);
@@ -382,12 +549,18 @@ export const portfolioService = {
       createdAt: new Date().toISOString()
     };
     if (isFirebaseConfigured && db) {
-      const docRef = await addDoc(collection(db, "messages"), {
-        ...msgData,
-        status: "unread",
-        createdAt: serverTimestamp()
-      });
-      newMsg.id = docRef.id;
+      try {
+        const docRef = await addDoc(collection(db, "messages"), {
+          ...msgData,
+          status: "unread",
+          createdAt: serverTimestamp()
+        });
+        newMsg.id = docRef.id;
+        console.log("✅ Contact message saved directly to Cloud Firestore:", docRef.id);
+      } catch (err) {
+        console.error("Failed to save message in Cloud Firestore:", err);
+        throw err;
+      }
     } else {
       newMsg.id = "msg-" + Date.now();
     }
@@ -399,7 +572,13 @@ export const portfolioService = {
 
   async updateMessageStatus(id, status) {
     if (isFirebaseConfigured && db) {
-      await updateDoc(doc(db, "messages", id), { status });
+      try {
+        const docRef = doc(db, "messages", id);
+        await setDoc(docRef, { status }, { merge: true });
+        console.log("✅ Message status updated in Cloud Firestore:", id);
+      } catch (err) {
+        console.error("Failed to update message status in Cloud Firestore:", err);
+      }
     }
     const state = getLocalState();
     state.messages = state.messages.map(m => m.id === id ? { ...m, status } : m);
@@ -409,7 +588,12 @@ export const portfolioService = {
 
   async deleteMessage(id) {
     if (isFirebaseConfigured && db) {
-      await deleteDoc(doc(db, "messages", id));
+      try {
+        await deleteDoc(doc(db, "messages", id));
+        console.log("✅ Message deleted from Cloud Firestore:", id);
+      } catch (err) {
+        console.error("Failed to delete message in Cloud Firestore:", err);
+      }
     }
     const state = getLocalState();
     state.messages = state.messages.filter(m => m.id !== id);
